@@ -7,7 +7,10 @@ const path = require('path');
 const moment = require('moment');
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
+
+// Trust proxy for Render/HTTPS
+app.set('trust proxy', 1);
 
 // Database setup
 const dbPath = path.join(__dirname, 'g9_auth.db');
@@ -150,11 +153,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(session({
     secret: 'g9_secret_key_js_123',
-    resave: false,
+    resave: true,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
-        secure: false, // Set to true if using HTTPS
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        secure: false, // Mantemos false para evitar problemas de compatibilidade inicial
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
@@ -259,11 +263,11 @@ app.get('/admin/dashboard', isAdmin, (req, res) => {
     db.all("SELECT * FROM users", [], (err, users) => {
         if (err) {
             console.error("Erro ao buscar usuários:", err.message);
-            users = [];
+            return res.status(500).send("Erro ao buscar usuários no banco.");
         }
         
-        // Filtra o admin principal da lista exibida para o usuário (case-insensitive)
-        const displayUsers = users ? users.filter(u => u.username.toLowerCase() !== 'admin') : [];
+        // Filtra o admin com segurança (evita erro se username for nulo)
+        const displayUsers = users ? users.filter(u => u.username && u.username.toLowerCase() !== 'admin') : [];
         
         db.all("SELECT * FROM licenses ORDER BY id DESC", [], (err, licenses) => {
             if (err) {
@@ -280,14 +284,20 @@ app.get('/admin/dashboard', isAdmin, (req, res) => {
                         console.error("Erro ao buscar configurações:", err.message);
                         configs = [];
                     }
-                    res.render('dashboard', { 
-                        users: displayUsers, 
-                        allUsers: users, // Mantém para estatísticas se necessário
-                        licenses: licenses || [], 
-                        logs: logs || [], 
-                        configs: configs || [],
-                        moment 
-                    });
+                    
+                    try {
+                        res.render('dashboard', { 
+                            users: displayUsers, 
+                            allUsers: users || [], 
+                            licenses: licenses || [], 
+                            logs: logs || [], 
+                            configs: configs || [],
+                            moment 
+                        });
+                    } catch (renderError) {
+                        console.error("ERRO DE RENDERIZAÇÃO:", renderError);
+                        res.status(500).send("Erro ao carregar a página do painel.");
+                    }
                 });
             });
         });
@@ -591,4 +601,13 @@ app.post('/api/login', (req, res) => {
 
 app.listen(port, () => {
     console.log(`Servidor G9 Auth rodando em http://localhost:${port}`);
+});
+
+// Captura erros globais para evitar crash silencioso na Render
+process.on('uncaughtException', (err) => {
+    console.error('CRASH DETECTADO (uncaughtException):', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRASH DETECTADO (unhandledRejection):', reason);
 });
