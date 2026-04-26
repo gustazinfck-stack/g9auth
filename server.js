@@ -203,22 +203,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-    // Teste: Enviar HTML puro para ver se o erro some
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head><title>G9 Login Test</title></head>
-        <body style="background:#111; color:white; text-align:center; padding-top:100px; font-family:sans-serif;">
-            <h1>G9 AUTH - PAINEL ADMIN</h1>
-            <form action="/admin/login" method="POST" style="background:#222; padding:20px; display:inline-block; border-radius:10px;">
-                <input type="text" name="username" placeholder="Usuário" style="display:block; margin:10px; padding:10px;"><br>
-                <input type="password" name="password" placeholder="Senha" style="display:block; margin:10px; padding:10px;"><br>
-                <button type="submit" style="padding:10px 20px; cursor:pointer;">ENTRAR</button>
-            </form>
-            <p style="color:red;">${req.query.error || ''}</p>
-        </body>
-        </html>
-    `);
+    res.render('login', { error: req.query.error || null });
 });
 
 app.post('/admin/login', (req, res) => {
@@ -280,20 +265,39 @@ app.post('/admin/login', (req, res) => {
 });
 
 app.get('/admin/dashboard', isAdmin, (req, res) => {
-    // TESTE SUPREMO: Se isso aqui der erro 500, o problema é no middleware ou na Render
-    try {
-        res.send(`
-            <body style="background:#111; color:white; font-family:sans-serif; padding:50px;">
-                <h1>DASHBOARD TESTE</h1>
-                <p>Se você está vendo isso, o login funcionou e o servidor está OK.</p>
-                <p>O erro 500 anterior era provavelmente no arquivo <b>dashboard.ejs</b>.</p>
-                <hr>
-                <a href="/logout" style="color:red;">Sair</a>
-            </body>
-        `);
-    } catch (e) {
-        res.status(500).send("Erro no teste: " + e.message);
-    }
+    const data = {
+        users: [],
+        allUsers: [],
+        configs: [],
+        moment: moment
+    };
+
+    // Consulta 1: Usuários
+    db.all("SELECT * FROM users", [], (err, rows) => {
+        if (!err && rows) {
+            data.allUsers = rows;
+            data.users = rows.filter(u => u && u.username && u.username.toLowerCase() !== 'admin');
+        }
+
+        // Consulta 2: Configs de Produto
+        db.all("SELECT * FROM product_config", [], (err, rows) => {
+            if (!err && rows) data.configs = rows;
+
+            try {
+                res.render('dashboard', data);
+            } catch (renderError) {
+                console.error("ERRO AO RENDERIZAR DASHBOARD.EJS:", renderError);
+                res.status(500).send(`
+                    <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
+                        <h1>ERRO NO TEMPLATE (EJS)</h1>
+                        <p>O servidor está funcionando, mas o arquivo <b>dashboard.ejs</b> tem um erro.</p>
+                        <pre style="background:#222; padding:10px; color:#eee; border:1px solid red;">${renderError.message}</pre>
+                        <a href="/admin/login" style="color:white;">Voltar para Login</a>
+                    </body>
+                `);
+            }
+        });
+    });
 });
 
 // --- Admin Actions ---
