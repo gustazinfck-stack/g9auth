@@ -230,13 +230,13 @@ app.post('/admin/login', (req, res) => {
     console.log(`[LOGIN] Tentativa de login admin: ${username}`);
 
     if (!username || !password) {
-        return res.render('login', { error: 'Por favor, preencha todos os campos.' });
+        return res.redirect('/admin/login?error=Preencha todos os campos');
     }
 
     db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
         if (err) {
             console.error("[LOGIN ERROR] Erro no banco:", err.message);
-            return res.render('login', { error: 'Erro interno no servidor.' });
+            return res.redirect('/admin/login?error=Erro no banco de dados');
         }
 
         if (!user) {
@@ -249,12 +249,12 @@ app.post('/admin/login', (req, res) => {
                     if (!err) console.log("[LOGIN] Admin recriado durante tentativa de login.");
                 });
             }
-            return res.render('login', { error: 'Credenciais inválidas.' });
+            return res.redirect('/admin/login?error=Credenciais invalidas');
         }
 
         if (user.is_admin !== 1) {
             console.log(`[LOGIN FAIL] Usuário ${username} não possui privilégios de admin.`);
-            return res.render('login', { error: 'Acesso negado.' });
+            return res.redirect('/admin/login?error=Acesso negado');
         }
 
         const passwordMatch = bcrypt.compareSync(password, user.password);
@@ -266,14 +266,14 @@ app.post('/admin/login', (req, res) => {
             req.session.save((err) => {
                 if (err) {
                     console.error("[SESSION ERROR] Erro ao salvar sessão:", err);
-                    return res.render('login', { error: 'Erro ao iniciar sessão.' });
+                    return res.redirect('/admin/login?error=Erro de sessao');
                 }
                 console.log(`[LOGIN SUCCESS] Admin logado: ${username}`);
-                return res.redirect('/admin/dashboard');
+                res.redirect('/admin/dashboard');
             });
         } else {
             console.log(`[LOGIN FAIL] Senha incorreta para: ${username}`);
-            return res.render('login', { error: 'Credenciais inválidas.' });
+            return res.redirect('/admin/login?error=Senha incorreta');
         }
     });
 });
