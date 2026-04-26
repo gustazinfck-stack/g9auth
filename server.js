@@ -279,40 +279,45 @@ app.post('/admin/login', (req, res) => {
 });
 
 app.get('/admin/dashboard', isAdmin, (req, res) => {
-    // Garantir que variáveis existam para evitar erro de undefined na renderização
-    let users = [];
-    let licenses = [];
-    let logs = [];
-    let configs = [];
+    // Sistema de segurança: Se as consultas falharem, o dashboard não trava
+    const data = {
+        users: [],
+        allUsers: [],
+        licenses: [],
+        logs: [],
+        configs: [],
+        moment: moment
+    };
 
+    // Consulta 1: Usuários
     db.all("SELECT * FROM users", [], (err, rows) => {
-        const safeUsers = Array.isArray(rows) ? rows : [];
-        
+        if (!err && rows) {
+            data.allUsers = rows;
+            data.users = rows.filter(u => u && u.username && u.username.toLowerCase() !== 'admin');
+        }
+
+        // Consulta 2: Licenças
         db.all("SELECT * FROM licenses ORDER BY id DESC", [], (err, rows) => {
-            const safeLicenses = Array.isArray(rows) ? rows : [];
-            
-            db.all("SELECT * FROM logs ORDER BY id DESC LIMIT 50", [], (err, rows) => {
-                const safeLogs = Array.isArray(rows) ? rows : [];
-                
-                db.all("SELECT * FROM product_config", [], (err, rows) => {
-                    const safeConfigs = Array.isArray(rows) ? rows : [];
-                    
-                    try {
-                        const displayUsers = safeUsers.filter(u => u && u.username && u.username.toLowerCase() !== 'admin');
-                        
-                        res.render('dashboard', { 
-                            users: displayUsers, 
-                            allUsers: safeUsers,
-                            licenses: safeLicenses, 
-                            logs: safeLogs, 
-                            configs: safeConfigs,
-                            moment: moment // Garantir que moment seja passado corretamente
-                        });
-                    } catch (renderError) {
-                        console.error("ERRO DE RENDERIZACAO NO DASHBOARD:", renderError);
-                        res.status(500).send(`<h1>Erro no Painel</h1><p>${renderError.message}</p><pre>${renderError.stack}</pre>`);
-                    }
-                });
+            if (!err && rows) data.licenses = rows;
+
+            // Consulta 3: Configs de Produto
+            db.all("SELECT * FROM product_config", [], (err, rows) => {
+                if (!err && rows) data.configs = rows;
+
+                // Tenta renderizar
+                try {
+                    res.render('dashboard', data);
+                } catch (renderError) {
+                    console.error("ERRO FATAL NO DASHBOARD:", renderError);
+                    res.status(500).send(`
+                        <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
+                            <h1>ERRO DE RENDERIZAÇÃO</h1>
+                            <p>${renderError.message}</p>
+                            <pre style="background:#222; padding:10px; color:#eee;">${renderError.stack}</pre>
+                            <a href="/admin/login" style="color:white;">Voltar para Login</a>
+                        </body>
+                    `);
+                }
             });
         });
     });
