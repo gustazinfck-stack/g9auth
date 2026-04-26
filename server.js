@@ -151,32 +151,12 @@ function addLog(userId, username, action, ip, product, type = 'user') {
         });
 }
 
-// Configuração de Views com Debug para Deploy
-const possibleViewsPaths = [
-    path.resolve(__dirname, 'views'),
-    path.join(process.cwd(), 'views'),
-    path.join(process.cwd(), 'G9 Authentication', 'views')
-];
-
-console.log(`[SISTEMA] Tentando encontrar views em:`, possibleViewsPaths);
-
-let foundPath = null;
-const fs = require('fs');
-
-for (const p of possibleViewsPaths) {
-    if (fs.existsSync(p)) {
-        console.log(`[SISTEMA] Pasta 'views' ENCONTRADA em: ${p}`);
-        foundPath = p;
-        break;
-    }
-}
-
-if (!foundPath) {
-    console.error(`[SISTEMA] ERRO CRÍTICO: Pasta 'views' NÃO ENCONTRADA em nenhum dos caminhos.`);
-}
+// Configuração de Views (Arquivos movidos para a raiz por solicitação do usuário)
+const rootPath = __dirname;
+console.log(`[SISTEMA] Configurando diretório de views para a raiz: ${rootPath}`);
 
 app.set('view engine', 'ejs');
-app.set('views', foundPath || possibleViewsPaths[0]);
+app.set('views', rootPath);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -348,13 +328,23 @@ app.get('/admin/dashboard', isAdmin, (req, res) => {
 
             res.render('dashboard', data, (err, html) => {
                 if (err) {
+                    const currentViewsPath = app.get('views');
+                    let dirFiles = [];
+                    try { dirFiles = fs.readdirSync(currentViewsPath); } catch(e) { dirFiles = [e.message]; }
+                    
                     console.error("ERRO AO RENDERIZAR DASHBOARD.EJS:", err);
                     return res.status(500).send(`
                         <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
                             <h1>ERRO NO TEMPLATE (EJS)</h1>
-                            <p>O servidor está funcionando, mas o arquivo <b>dashboard.ejs</b> não pôde ser carregado ou renderizado.</p>
-                            <pre style="background:#222; padding:10px; color:#eee; border:1px solid red;">${err.message}</pre>
-                            <p>Verifique se o arquivo <code>views/dashboard.ejs</code> existe no servidor.</p>
+                            <p>O servidor está funcionando, mas o arquivo <b>dashboard.ejs</b> não pôde ser carregado.</p>
+                            <div style="background:#222; padding:20px; color:#eee; border:1px solid red; margin-bottom:20px;">
+                                <b>Erro:</b> ${err.message}<br><br>
+                                <b>Diretório configurado:</b> <code>${currentViewsPath}</code><br>
+                                <b>Arquivos encontrados nesse diretório:</b> <code>${dirFiles.join(', ') || 'NENHUM'}</code><br>
+                                <b>__dirname:</b> <code>${__dirname}</code><br>
+                                <b>process.cwd():</b> <code>${process.cwd()}</code>
+                            </div>
+                            <p>Verifique se o arquivo <code>views/dashboard.ejs</code> foi enviado para o GitHub.</p>
                             <a href="/admin/login" style="color:white;">Voltar para Login</a>
                         </body>
                     `);
