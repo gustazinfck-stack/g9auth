@@ -185,16 +185,17 @@ function getClientIp(req) {
 
 // Auth check middleware
 function isAdmin(req, res, next) {
-    if (req.session.isAdmin) {
+    if (req.session && req.session.isAdmin) {
         return next();
     }
-    res.redirect('/admin/login');
+    console.log("[AUTH] Bloqueado: Sessão inválida ou não é admin");
+    res.redirect('/admin/login?error=Sessao expirada');
 }
 
 // --- Admin Routes ---
 
 app.get('/', (req, res) => {
-    if (req.session.isAdmin) {
+    if (req.session && req.session.isAdmin) {
         res.redirect('/admin/dashboard');
     } else {
         res.redirect('/admin/login');
@@ -279,48 +280,20 @@ app.post('/admin/login', (req, res) => {
 });
 
 app.get('/admin/dashboard', isAdmin, (req, res) => {
-    // Sistema de segurança: Se as consultas falharem, o dashboard não trava
-    const data = {
-        users: [],
-        allUsers: [],
-        licenses: [],
-        logs: [],
-        configs: [],
-        moment: moment
-    };
-
-    // Consulta 1: Usuários
-    db.all("SELECT * FROM users", [], (err, rows) => {
-        if (!err && rows) {
-            data.allUsers = rows;
-            data.users = rows.filter(u => u && u.username && u.username.toLowerCase() !== 'admin');
-        }
-
-        // Consulta 2: Licenças
-        db.all("SELECT * FROM licenses ORDER BY id DESC", [], (err, rows) => {
-            if (!err && rows) data.licenses = rows;
-
-            // Consulta 3: Configs de Produto
-            db.all("SELECT * FROM product_config", [], (err, rows) => {
-                if (!err && rows) data.configs = rows;
-
-                // Tenta renderizar
-                try {
-                    res.render('dashboard', data);
-                } catch (renderError) {
-                    console.error("ERRO FATAL NO DASHBOARD:", renderError);
-                    res.status(500).send(`
-                        <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
-                            <h1>ERRO DE RENDERIZAÇÃO</h1>
-                            <p>${renderError.message}</p>
-                            <pre style="background:#222; padding:10px; color:#eee;">${renderError.stack}</pre>
-                            <a href="/admin/login" style="color:white;">Voltar para Login</a>
-                        </body>
-                    `);
-                }
-            });
-        });
-    });
+    // TESTE SUPREMO: Se isso aqui der erro 500, o problema é no middleware ou na Render
+    try {
+        res.send(`
+            <body style="background:#111; color:white; font-family:sans-serif; padding:50px;">
+                <h1>DASHBOARD TESTE</h1>
+                <p>Se você está vendo isso, o login funcionou e o servidor está OK.</p>
+                <p>O erro 500 anterior era provavelmente no arquivo <b>dashboard.ejs</b>.</p>
+                <hr>
+                <a href="/logout" style="color:red;">Sair</a>
+            </body>
+        `);
+    } catch (e) {
+        res.status(500).send("Erro no teste: " + e.message);
+    }
 });
 
 // --- Admin Actions ---
@@ -616,6 +589,19 @@ app.post('/api/login', (req, res) => {
             });
         });
     });
+});
+
+// Middleware de tratamento de erro do Express (DEVE SER O ÚLTIMO)
+app.use((err, req, res, next) => {
+    console.error("ERRO EXPRESS:", err);
+    res.status(500).send(`
+        <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
+            <h1>ERRO INTERNO DO SERVIDOR (500)</h1>
+            <p>Ocorreu um erro inesperado no processamento da rota.</p>
+            <pre style="background:#222; padding:10px; color:#eee; border:1px solid red;">${err.message}\n${err.stack}</pre>
+            <a href="/admin/login" style="color:white;">Voltar para Login</a>
+        </body>
+    `);
 });
 
 app.listen(port, () => {
