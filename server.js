@@ -202,14 +202,22 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-    try {
-        if (req.session && req.session.isAdmin) {
-            return res.redirect('/admin/dashboard');
-        }
-        res.render('login', { error: null });
-    } catch (e) {
-        res.status(500).send(`Erro ao carregar login: ${e.message}`);
-    }
+    // Teste: Enviar HTML puro para ver se o erro some
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>G9 Login Test</title></head>
+        <body style="background:#111; color:white; text-align:center; padding-top:100px; font-family:sans-serif;">
+            <h1>G9 AUTH - PAINEL ADMIN</h1>
+            <form action="/admin/login" method="POST" style="background:#222; padding:20px; display:inline-block; border-radius:10px;">
+                <input type="text" name="username" placeholder="Usuário" style="display:block; margin:10px; padding:10px;"><br>
+                <input type="password" name="password" placeholder="Senha" style="display:block; margin:10px; padding:10px;"><br>
+                <button type="submit" style="padding:10px 20px; cursor:pointer;">ENTRAR</button>
+            </form>
+            <p style="color:red;">${req.query.error || ''}</p>
+        </body>
+        </html>
+    `);
 });
 
 app.post('/admin/login', (req, res) => {
