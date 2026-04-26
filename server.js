@@ -13,9 +13,14 @@ const port = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 // Database setup
-const dbPath = path.join(__dirname, 'g9_auth.db');
-const db = new sqlite3.Database(dbPath);
-console.log(`Database initialized at: ${dbPath}`);
+const dbPath = process.env.RENDER ? '/tmp/g9_auth.db' : path.join(__dirname, 'g9_auth.db');
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error("ERRO AO ABRIR BANCO DE DADOS:", err.message);
+    } else {
+        console.log(`Banco de dados conectado em: ${dbPath}`);
+    }
+});
 
 // --- Database Initialization ---
 db.serialize(() => {
@@ -260,43 +265,38 @@ app.post('/admin/login', (req, res) => {
 });
 
 app.get('/admin/dashboard', isAdmin, (req, res) => {
-    db.all("SELECT * FROM users", [], (err, users) => {
-        if (err) {
-            console.error("Erro ao buscar usuários:", err.message);
-            return res.status(500).send("Erro ao buscar usuários no banco.");
-        }
+    // Garantir que variáveis existam para evitar erro de undefined na renderização
+    let users = [];
+    let licenses = [];
+    let logs = [];
+    let configs = [];
+
+    db.all("SELECT * FROM users", [], (err, rows) => {
+        const safeUsers = Array.isArray(rows) ? rows : [];
         
-        // Filtra o admin com segurança (evita erro se username for nulo)
-        const displayUsers = users ? users.filter(u => u.username && u.username.toLowerCase() !== 'admin') : [];
-        
-        db.all("SELECT * FROM licenses ORDER BY id DESC", [], (err, licenses) => {
-            if (err) {
-                console.error("Erro ao buscar licenças:", err.message);
-                licenses = [];
-            }
-            db.all("SELECT * FROM logs ORDER BY id DESC LIMIT 50", [], (err, logs) => {
-                if (err) {
-                    console.error("Erro ao buscar logs:", err.message);
-                    logs = [];
-                }
-                db.all("SELECT * FROM product_config", [], (err, configs) => {
-                    if (err) {
-                        console.error("Erro ao buscar configurações:", err.message);
-                        configs = [];
-                    }
+        db.all("SELECT * FROM licenses ORDER BY id DESC", [], (err, rows) => {
+            const safeLicenses = Array.isArray(rows) ? rows : [];
+            
+            db.all("SELECT * FROM logs ORDER BY id DESC LIMIT 50", [], (err, rows) => {
+                const safeLogs = Array.isArray(rows) ? rows : [];
+                
+                db.all("SELECT * FROM product_config", [], (err, rows) => {
+                    const safeConfigs = Array.isArray(rows) ? rows : [];
                     
                     try {
+                        const displayUsers = safeUsers.filter(u => u && u.username && u.username.toLowerCase() !== 'admin');
+                        
                         res.render('dashboard', { 
                             users: displayUsers, 
-                            allUsers: users || [], 
-                            licenses: licenses || [], 
-                            logs: logs || [], 
-                            configs: configs || [],
-                            moment 
+                            allUsers: safeUsers,
+                            licenses: safeLicenses, 
+                            logs: safeLogs, 
+                            configs: safeConfigs,
+                            moment: moment // Garantir que moment seja passado corretamente
                         });
                     } catch (renderError) {
-                        console.error("ERRO DE RENDERIZAÇÃO:", renderError);
-                        res.status(500).send("Erro ao carregar a página do painel.");
+                        console.error("ERRO DE RENDERIZACAO NO DASHBOARD:", renderError);
+                        res.status(500).send(`<h1>Erro no Painel</h1><p>${renderError.message}</p><pre>${renderError.stack}</pre>`);
                     }
                 });
             });
