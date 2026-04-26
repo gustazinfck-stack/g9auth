@@ -152,27 +152,32 @@ function addLog(userId, username, action, ip, product, type = 'user') {
 }
 
 // Configuração de Views com Debug para Deploy
-const viewsPath = path.resolve(__dirname, 'views');
-console.log(`[SISTEMA] Caminho das views: ${viewsPath}`);
+const possibleViewsPaths = [
+    path.resolve(__dirname, 'views'),
+    path.join(process.cwd(), 'views'),
+    path.join(process.cwd(), 'G9 Authentication', 'views')
+];
 
+console.log(`[SISTEMA] Tentando encontrar views em:`, possibleViewsPaths);
+
+let foundPath = null;
 const fs = require('fs');
-if (fs.existsSync(viewsPath)) {
-    console.log(`[SISTEMA] Pasta 'views' encontrada. Arquivos:`, fs.readdirSync(viewsPath));
-} else {
-    console.error(`[SISTEMA] ERRO: Pasta 'views' NÃO ENCONTRADA em: ${viewsPath}`);
-    // Tentativa de fallback para o diretório de trabalho atual
-    const fallbackPath = path.join(process.cwd(), 'views');
-    console.log(`[SISTEMA] Tentando fallback: ${fallbackPath}`);
-    if (fs.existsSync(fallbackPath)) {
-        console.log(`[SISTEMA] Fallback funcionou!`);
-        app.set('views', fallbackPath);
+
+for (const p of possibleViewsPaths) {
+    if (fs.existsSync(p)) {
+        console.log(`[SISTEMA] Pasta 'views' ENCONTRADA em: ${p}`);
+        foundPath = p;
+        break;
     }
 }
 
-app.set('view engine', 'ejs');
-if (!app.get('views')) {
-    app.set('views', viewsPath);
+if (!foundPath) {
+    console.error(`[SISTEMA] ERRO CRÍTICO: Pasta 'views' NÃO ENCONTRADA em nenhum dos caminhos.`);
 }
+
+app.set('view engine', 'ejs');
+app.set('views', foundPath || possibleViewsPaths[0]);
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(session({
@@ -187,6 +192,25 @@ app.use(session({
 
 // Test route to check if server is alive
 app.get('/ping', (req, res) => res.send('PONG - Servidor está vivo!'));
+
+// Rota de diagnóstico para views
+app.get('/debug-views', (req, res) => {
+    const vPath = app.get('views');
+    const fs = require('fs');
+    let info = {
+        detectedPath: vPath,
+        exists: fs.existsSync(vPath),
+        cwd: process.cwd(),
+        dirname: __dirname,
+        files: []
+    };
+    
+    if (info.exists) {
+        info.files = fs.readdirSync(vPath);
+    }
+    
+    res.json(info);
+});
 
 // Global locals middleware
 app.use((req, res, next) => {
