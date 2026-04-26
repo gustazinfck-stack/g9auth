@@ -151,9 +151,28 @@ function addLog(userId, username, action, ip, product, type = 'user') {
         });
 }
 
-// Middleware
+// Configuração de Views com Debug para Deploy
+const viewsPath = path.resolve(__dirname, 'views');
+console.log(`[SISTEMA] Caminho das views: ${viewsPath}`);
+
+const fs = require('fs');
+if (fs.existsSync(viewsPath)) {
+    console.log(`[SISTEMA] Pasta 'views' encontrada. Arquivos:`, fs.readdirSync(viewsPath));
+} else {
+    console.error(`[SISTEMA] ERRO: Pasta 'views' NÃO ENCONTRADA em: ${viewsPath}`);
+    // Tentativa de fallback para o diretório de trabalho atual
+    const fallbackPath = path.join(process.cwd(), 'views');
+    console.log(`[SISTEMA] Tentando fallback: ${fallbackPath}`);
+    if (fs.existsSync(fallbackPath)) {
+        console.log(`[SISTEMA] Fallback funcionou!`);
+        app.set('views', fallbackPath);
+    }
+}
+
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+if (!app.get('views')) {
+    app.set('views', viewsPath);
+}
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(session({
@@ -203,7 +222,27 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-    res.render('login', { error: req.query.error || null });
+    res.render('login', { error: req.query.error || null }, (err, html) => {
+        if (err) {
+            console.error("ERRO AO RENDERIZAR LOGIN.EJS:", err);
+            // Fallback em HTML caso o arquivo EJS suma
+            return res.send(`
+                <body style="background:#0a0a0a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+                    <div style="background:#141414; padding:50px; border-radius:28px; border:1px solid #222; max-width:400px; width:100%; text-align:center;">
+                        <h1 style="margin-bottom:20px;">G9 AUTH</h1>
+                        <p style="color:red;">Erro ao carregar template (EJS)</p>
+                        <form action="/admin/login" method="POST" style="display:flex; flex-direction:column; gap:15px;">
+                            <input type="text" name="username" placeholder="Admin Username" style="padding:12px; border-radius:10px; border:1px solid #333; background:#111; color:white;">
+                            <input type="password" name="password" placeholder="Password" style="padding:12px; border-radius:10px; border:1px solid #333; background:#111; color:white;">
+                            <button type="submit" style="padding:12px; border-radius:10px; border:none; background:white; color:black; font-weight:bold; cursor:pointer;">Entrar</button>
+                        </form>
+                        ${req.query.error ? `<p style="color:orange; margin-top:15px;">${req.query.error}</p>` : ''}
+                    </div>
+                </body>
+            `);
+        }
+        res.send(html);
+    });
 });
 
 app.post('/admin/login', (req, res) => {
@@ -283,19 +322,21 @@ app.get('/admin/dashboard', isAdmin, (req, res) => {
         db.all("SELECT * FROM product_config", [], (err, rows) => {
             if (!err && rows) data.configs = rows;
 
-            try {
-                res.render('dashboard', data);
-            } catch (renderError) {
-                console.error("ERRO AO RENDERIZAR DASHBOARD.EJS:", renderError);
-                res.status(500).send(`
-                    <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
-                        <h1>ERRO NO TEMPLATE (EJS)</h1>
-                        <p>O servidor está funcionando, mas o arquivo <b>dashboard.ejs</b> tem um erro.</p>
-                        <pre style="background:#222; padding:10px; color:#eee; border:1px solid red;">${renderError.message}</pre>
-                        <a href="/admin/login" style="color:white;">Voltar para Login</a>
-                    </body>
-                `);
-            }
+            res.render('dashboard', data, (err, html) => {
+                if (err) {
+                    console.error("ERRO AO RENDERIZAR DASHBOARD.EJS:", err);
+                    return res.status(500).send(`
+                        <body style="background:#111; color:red; padding:50px; font-family:sans-serif;">
+                            <h1>ERRO NO TEMPLATE (EJS)</h1>
+                            <p>O servidor está funcionando, mas o arquivo <b>dashboard.ejs</b> não pôde ser carregado ou renderizado.</p>
+                            <pre style="background:#222; padding:10px; color:#eee; border:1px solid red;">${err.message}</pre>
+                            <p>Verifique se o arquivo <code>views/dashboard.ejs</code> existe no servidor.</p>
+                            <a href="/admin/login" style="color:white;">Voltar para Login</a>
+                        </body>
+                    `);
+                }
+                res.send(html);
+            });
         });
     });
 });
