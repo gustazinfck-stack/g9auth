@@ -588,7 +588,11 @@ app.post('/api/register', (req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
-    const { username, password, hwid, product, version } = req.body;
+    let { username, password, hwid, product, version } = req.body;
+    
+    // Trim e Lowercase para consistência com o banco de dados
+    if (username) username = username.trim().toLowerCase();
+    
     const targetProduct = product || 'G9_PRIVATE';
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
