@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #0f0f0f;
+            --main-bg: #0a0a0a;
+            --accent: #ffffff;
+            --accent-hover: #e0e0e0;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #222222;
+            --card-bg: #141414;
+            --active-bg: #1a1a1a;
+            --input-bg: #111111;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--main-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(255,255,255,0.02) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255,255,255,0.02) 0%, transparent 50%);
+        }
+
+        .wrapper {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        #sidebar {
+            min-width: 280px;
+            max-width: 280px;
+            background: var(--sidebar-bg);
+            color: var(--text-primary);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100vh;
+            position: fixed;
+            border-right: 1px solid var(--border-color);
+            z-index: 1000;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        #content {
+            width: 100%;
+            padding: 60px; /* Aumentado de 50px para 60px */
+            min-height: 100vh;
+            transition: all 0.4s;
+            margin-left: 280px;
+            background: transparent;
+        }
+
+        .sidebar-header {
+            padding: 50px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header h4 {
+            margin-bottom: 0;
+            font-weight: 900;
+            font-size: 1.8rem;
+            letter-spacing: -2px;
+            color: var(--text-primary);
+        }
+
+        .sidebar-header span {
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        #sidebar ul.components {
+            padding: 40px 20px;
+        }
+
+        #sidebar ul li {
+            margin-bottom: 12px;
+        }
+
+        #sidebar ul li a {
+            padding: 16px 24px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            border-radius: 16px;
+            border: 1px solid transparent;
+        }
+
+        #sidebar ul li a i {
+            width: 24px;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            opacity: 0.6;
+        }
+
+        #sidebar ul li a:hover {
+            color: var(--text-primary);
+            background: var(--glass-bg);
+            border-color: var(--glass-border);
+            transform: translateX(8px);
+        }
+
+        #sidebar ul li a.active {
+            color: #000;
+            background: var(--accent);
+            box-shadow: 0 10px 25px rgba(255,255,255,0.15);
+            font-weight: 700;
+        }
+
+        #sidebar ul li a.active i {
+            opacity: 1;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-5px);
+        }
+
+        .stats-card {
+            padding: 35px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--active-bg);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 25px;
+            font-size: 1.6rem;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover .stats-icon {
+            transform: rotate(-10deg) scale(1.1);
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 28px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .filter-container {
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            padding: 35px; /* Aumentado de 25px para 35px */
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .table {
+            color: var(--text-primary);
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0 12px;
+        }
+
+        .table thead th {
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 800;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            padding: 15px 25px;
+            background: transparent;
+        }
+
+        .table tbody tr {
+            background: var(--input-bg);
+            transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .table tbody tr td {
+            border: none;
+            padding: 22px 25px;
+            background: transparent !important;
+            color: var(--text-primary) !important;
+        }
+
+        .table tbody tr td:first-child {
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            border-left: 2px solid transparent;
+        }
+
+        .table tbody tr td:last-child {
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--active-bg) !important;
+        }
+
+        .table-hover tbody tr:hover td:first-child {
+            border-left-color: var(--accent);
+        }
+
+        /* Estilos Consolidados para Inputs e Selects */
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Borda mais visível */
+            color: white !important;
+            border-radius: 20px !important; /* Mais "bordado"/arredondado */
+            padding: 16px 25px !important; /* Aumentado de 14px 22px para 16px 25px */
+            transition: 0.3s all ease !important;
+            box-sizing: border-box !important;
+            outline: none !important;
+            font-size: 1rem !important; /* Aumentado de 0.95rem para 1rem */
+        }
+
+        .form-select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 1.2rem center !important;
+            background-size: 14px 14px !important;
+            padding-right: 3.5rem !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+        }
+
+        .form-select option {
+            background: #111111;
+            color: #ffffff;
+            padding: 10px;
+        }
+
+        .form-control:focus, .form-select:focus, .btn:focus {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important; /* Brilho maior no foco */
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .btn {
+            border-radius: 18px;
+            padding: 12px 24px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid transparent;
+        }
+
+        .btn-info {
+            background: var(--accent);
+            border: none;
+            color: #000;
+        }
+
+        .btn-info:hover {
+            background: var(--accent-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.2);
+            color: #000;
+        }
+
+        .btn-white {
+            background: #ffffff;
+            border: none;
+            color: #000;
+        }
+
+        .btn-white:hover {
+            background: #e0e0e0;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.2);
+            color: #000;
+        }
+
+        .btn-outline-danger {
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .btn-outline-danger:hover {
+            background: var(--danger-color);
+            color: #fff;
+            border-color: var(--danger-color);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .badge {
+            padding: 10px 18px;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+        }
+
+        .bg-light {
+            background-color: var(--active-bg) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        /* Deixar os labels e textos informativos brancos */
+        .form-label, .text-secondary, .stats-card .text-secondary, .small.text-secondary {
+            color: #ffffff !important;
+            opacity: 1 !important;
+        }
+
+        .hwid-text {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Melhorias no Gerenciamento de Dias */
+        .day-manager {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            transition: 0.3s all ease;
+        }
+
+        .day-manager:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .day-input {
+            width: 45px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: 800;
+            text-align: center;
+            font-size: 0.85rem;
+            outline: none;
+            -moz-appearance: textfield; /* Firefox */
+        }
+
+        .day-input::-webkit-outer-spin-button,
+        .day-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .day-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 10px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            transition: 0.2s all cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+        }
+
+        .day-btn-add {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .day-btn-add:hover {
+            background: #10b981;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .day-btn-remove {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .day-btn-remove:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Ajuste específico para o campo de pesquisa e selects */
+        .search-container {
+            position: relative;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+        }
+
+        .search-container .form-control {
+            padding-left: 45px !important;
+        }
+
+        /* Todos os ícones cinza, exceto os da sidebar */
+        .content-area i, .main-content i, .card i, table i {
+            color: var(--text-secondary) !important;
+        }
+
+        .tab-content {
+            background: transparent;
+            border: none;
+        }
+
+        .nav-tabs {
+            border: none;
+            margin-bottom: 25px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--main-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+            border: 2px solid var(--main-bg);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                margin-left: -280px;
+            }
+            #sidebar.active {
+                margin-left: 0;
+            }
+            #content {
+                margin-left: 0;
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h4>Gusta9 <span>Auth</span></h4>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="#" class="active" data-tab="users" onclick="showTab('users', this)"><i class="fas fa-users"></i> Usuários</a>
+                </li>
+                <li>
+                    <a href="#" data-tab="products" onclick="showTab('products', this)"><i class="fas fa-box"></i> Produtos</a>
+                </li>
+            </ul>
+
+            <div style="position: absolute; bottom: 30px; width: 100%; padding: 0 20px;">
+                <a href="/logout" class="btn btn-outline-danger w-100 justify-content-center py-3" style="border-radius: 16px;">
+                    <i class="fas fa-sign-out-alt"></i> Encerrar Sessão
+                </a>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <div class="d-flex justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-800 mb-1" style="letter-spacing: -1px;">Painel Administrativo</h2>
+                    <p class="text-secondary small mb-0">Gerencie sua infraestrutura de autenticação G9.</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                        <div class="fw-bold">Gusta9</div>
+                        <div class="text-secondary" style="font-size: 0.7rem;">Sessão Ativa</div>
+                    </div>
+                    <div style="width: 45px; height: 45px; background: var(--active-bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="stats-card">
+                            <div class="stats-icon"><i class="fas fa-users"></i></div>
+                            <div>
+                                <div class="text-secondary small fw-bold">USUÁRIOS</div>
+                                <div class="h3 mb-0 fw-800"><%= (typeof users !== 'undefined' ? users.length : 0) %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="stats-card">
+                            <div class="stats-icon"><i class="fas fa-user-slash"></i></div>
+                            <div>
+                                <div class="text-secondary small fw-bold">BANIMENTOS</div>
+                                <div class="h3 mb-0 fw-800 text-danger"><%= (typeof users !== 'undefined' ? users.filter(u => u.is_banned).length : 0) %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="stats-card">
+                            <div class="stats-icon"><i class="fas fa-shield-alt"></i></div>
+                            <div>
+                                <div class="text-secondary small fw-bold">SISTEMA</div>
+                                <div class="h3 mb-0 fw-800 text-success">ONLINE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="myTabContent">
+                <!-- Tab: Users List -->
+                <div class="tab-pane fade show active" id="users" role="tabpanel">
+                    <div class="d-flex gap-3 mb-4">
+                        <button class="btn btn-sm btn-white px-4 py-2 user-sub-tab active" onclick="showUserSubTab('userList', this)">
+                            <i class="fas fa-list me-2"></i>Lista de Usuários
+                        </button>
+                        <button class="btn btn-sm btn-outline-light px-4 py-2 user-sub-tab" onclick="showUserSubTab('userAdd', this)">
+                            <i class="fas fa-user-plus me-2"></i>Novo Registro
+                        </button>
+                    </div>
+
+                    <div id="userListSubTab">
+                        <div class="card border-0 bg-transparent mb-0">
+                            <div class="card-body p-0">
+                                <div class="filter-container">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="search-container">
+                                                <i class="fas fa-search"></i>
+                                                <input type="text" id="userSearch" class="form-control" onkeyup="filterUsers()" placeholder="Pesquisar por nome, ID ou HWID...">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select id="productFilter" class="form-select" onchange="filterUsers()">
+                                                <option value="ALL">Todos os Produtos</option>
+                                                <% configs.forEach(config => { %>
+                                                    <option value="<%= config.product_name %>"><%= config.product_name %></option>
+                                                <% }) %>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-container">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr class="border-bottom border-secondary-subtle">
+                                                    <th class="ps-4">Identificação</th>
+                                                    <th>Produto</th>
+                                                    <th>Conectividade</th>
+                                                    <th>Segurança HWID</th>
+                                                    <th>Validade</th>
+                                                    <th>Estado</th>
+                                                    <th class="text-end pe-4">Gerenciar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="usersTableBody">
+                                                <% users.forEach(function(user) { %>
+                                                <tr class="user-row" data-product="<%= user.product %>">
+                                                    <td class="ps-4">
+                                                        <div class="fw-800 text-white"><%= user.username %></div>
+                                                        <div class="small text-secondary font-monospace" style="font-size: 0.65rem; opacity: 0.6;">UID: #<%= user.id %></div>
+                                                    </td>
+                                                    <td><span class="badge bg-light border border-secondary-subtle text-white-50"><%= user.product %></span></td>
+                                                    <td>
+                                                        <div class="small text-secondary" style="font-size: 0.7rem;"><i class="far fa-clock me-1 opacity-50"></i><%= user.last_login ? moment(user.last_login).format('DD/MM HH:mm') : 'Sem registro' %></div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="hwid-text text-truncate" style="max-width: 140px;" title="<%= user.hwid %>">
+                                                            <%= user.hwid ? user.hwid : 'Vazio' %>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="small fw-800 text-white"><%= user.expiry_date ? moment(user.expiry_date).format('DD/MM/YYYY') : 'Vitalício' %></div>
+                                                        <div class="small text-secondary" style="font-size: 0.7rem;"><%= user.expiry_date ? moment(user.expiry_date).fromNow() : 'Sem expiração' %></div>
+                                                    </td>
+                                                    <td>
+                                                        <% if (user.is_banned) { %>
+                                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">BANIDO</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">ATIVO</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td class="text-end pe-4">
+                                                        <div class="d-flex justify-content-end align-items-center gap-3">
+                                                            <!-- Modern Day Manager -->
+                                                            <div class="day-manager">
+                                                                <button onclick="modifyDays('<%= user.id %>', 'remove')" class="day-btn day-btn-remove" title="Remover Dias">
+                                                                    <i class="fas fa-minus"></i>
+                                                                </button>
+                                                                <input type="number" id="days_<%= user.id %>" class="day-input" value="30" min="1">
+                                                                <button onclick="modifyDays('<%= user.id %>', 'add')" class="day-btn day-btn-add" title="Adicionar Dias">
+                                                                    <i class="fas fa-plus"></i>
+                                                                </button>
+                                                            </div>
+
+                                                            <div class="d-flex gap-2">
+                                                                <form action="/admin/manage/<%= user.id %>/reset_hwid" method="POST">
+                                                                    <button class="btn btn-sm btn-outline-light" title="Resetar HWID" style="width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 12px;">
+                                                                        <i class="fas fa-fingerprint"></i>
+                                                                    </button>
+                                                                </form>
+                                                                <form action="/admin/manage/<%= user.id %>/ban" method="POST">
+                                                                    <button class="btn btn-sm btn-<%= user.is_banned ? 'info' : 'outline-warning' %>" title="<%= user.is_banned ? 'Desbloquear' : 'Bloquear' %>" style="width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 12px;">
+                                                                        <i class="fas fa-<%= user.is_banned ? 'unlock' : 'user-lock' %>"></i>
+                                                                    </button>
+                                                                </form>
+                                                                <form action="/admin/manage/<%= user.id %>/delete" method="POST" onsubmit="return confirm('ATENÇÃO: Deseja realmente excluir este usuário permanentemente?')">
+                                                                    <button class="btn btn-sm btn-outline-danger" title="Excluir" style="width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 12px;">
+                                                                        <i class="fas fa-trash-alt"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="userAddSubTab" style="display: none;">
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body p-5">
+                                        <h5 class="fw-800 mb-4 text-center text-white" style="letter-spacing: -1px;">Cadastrar Novo Membro</h5>
+                                        <form action="/admin/add_user" method="POST">
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold text-white">NOME DE USUÁRIO</label>
+                                                <input type="text" name="username" class="form-control" placeholder="Digite o login" required style="text-transform: none !important;">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold text-white">ID DO DISCORD</label>
+                                                <input type="text" name="discord_id" class="form-control" placeholder="Opcional">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold text-white">PRODUTO DESIGNADO</label>
+                                                <select name="product" class="form-select">
+                                                    <% configs.forEach(config => { %>
+                                                        <option value="<%= config.product_name %>"><%= config.product_name %></option>
+                                                    <% }) %>
+                                                </select>
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label small fw-bold text-white">DURAÇÃO (0 = VITALÍCIO)</label>
+                                                <input type="number" name="days" class="form-control" value="30">
+                                            </div>
+                                            <button type="submit" class="btn btn-white w-100 py-3">Registrar Usuário</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Produtos -->
+                <div class="tab-pane fade" id="products" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="card mb-4">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-800 mb-4 text-white" style="letter-spacing: -1px;"><i class="fas fa-plus-square me-2"></i>Novo Produto</h5>
+                                    <form action="/admin/add_product" method="POST">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold text-white">NOME DO PRODUTO</label>
+                                            <input type="text" name="product_name" class="form-control" placeholder="Ex: FIVEM, CSGO, FF" required style="text-transform: none !important;">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold text-white">VERSÃO INICIAL</label>
+                                            <input type="text" name="version" class="form-control" placeholder="1.0.0" value="1.0.0">
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="form-label small fw-bold text-white">MENSAGEM (MOTD)</label>
+                                            <input type="text" name="motd" class="form-control" placeholder="Bem-vindo ao software!">
+                                        </div>
+                                        <button type="submit" class="btn btn-white w-100 py-3">Criar Produto</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-body p-4">
+                                    <h5 class="fw-800 mb-4 text-white" style="letter-spacing: -1px;"><i class="fas fa-cog me-2"></i>Configurar Existente</h5>
+                                    <form action="/admin/update_config" method="POST">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold text-white">SELECIONAR PRODUTO</label>
+                                            <select name="product" class="form-select">
+                                                <% configs.forEach(config => { %>
+                                                    <option value="<%= config.product_name %>"><%= config.product_name %></option>
+                                                <% }) %>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold text-white">VERSÃO DO CLIENTE</label>
+                                            <input type="text" name="version" class="form-control" placeholder="1.0.0">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold text-white">MENSAGEM DE BOAS-VINDAS</label>
+                                            <textarea name="motd" class="form-control" rows="2"></textarea>
+                                        </div>
+                                        <div class="mb-4 d-flex align-items-center justify-content-between p-3 rounded-4" style="background: var(--active-bg); border: 1px solid var(--border-color);">
+                                            <div>
+                                                <div class="fw-800 small text-white">MODO MANUTENÇÃO</div>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="maintenance" id="maintenanceSwitch" style="width: 40px; height: 20px; cursor: pointer;">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-white w-100 py-3">Salvar Configurações</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-7">
+                            <div class="table-container">
+                                <h5 class="fw-800 mb-4" style="letter-spacing: -1px;"><i class="fas fa-layer-group me-2"></i>Produtos Ativos</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Produto</th>
+                                                <th>Build</th>
+                                                <th>Status</th>
+                                                <th class="text-end">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% configs.forEach(config => { %>
+                                                <tr>
+                                                    <td class="fw-bold text-white"><%= config.product_name %></td>
+                                                    <td><span class="badge bg-light border border-secondary-subtle"><%= config.version %></span></td>
+                                                    <td>
+                                                        <% if(config.is_maintenance) { %>
+                                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">MANUTENÇÃO</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">ONLINE</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td class="text-end">
+                                                <form action="/admin/delete_product/<%= encodeURIComponent(config.product_name) %>" method="POST" onsubmit="return deleteProduct(event, this)">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" style="width: 32px; height: 32px; padding: 0; justify-content: center;">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                                    </td>
+                                                </tr>
+                                            <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showTab(tabId, element) {
+            // Salva a aba ativa no localStorage para persistência
+            localStorage.setItem('activeTab', tabId);
+
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            tabPanes.forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+
+            const targetPane = document.getElementById(tabId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+
+            const links = document.querySelectorAll('#sidebar ul li a');
+            links.forEach(link => {
+                link.classList.remove('active');
+            });
+
+            if (element) {
+                element.classList.add('active');
+            } else {
+                // Busca o link pelo atributo data-tab
+                const activeLink = document.querySelector(`#sidebar ul li a[data-tab="${tabId}"]`);
+                if (activeLink) activeLink.classList.add('active');
+            }
+        }
+
+        // Seleção automática da aba ao carregar
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            const savedTab = localStorage.getItem('activeTab');
+            
+            // Prioridade: 1. Parâmetro na URL, 2. Aba salva no localStorage, 3. Aba 'users' (padrão)
+            const tabToSelect = tabParam || savedTab || 'users';
+            
+            showTab(tabToSelect, null);
+        });
+
+        function showUserSubTab(subTabId, element) {
+            const listSubTab = document.getElementById('userListSubTab');
+            const addSubTab = document.getElementById('userAddSubTab');
+            const buttons = document.querySelectorAll('.user-sub-tab');
+
+            buttons.forEach(btn => {
+                btn.classList.remove('btn-white', 'active');
+                btn.classList.add('btn-outline-light');
+            });
+
+            element.classList.remove('btn-outline-light');
+            element.classList.add('btn-white', 'active');
+
+            if (subTabId === 'userList') {
+                listSubTab.style.display = 'block';
+                addSubTab.style.display = 'none';
+            } else {
+                listSubTab.style.display = 'none';
+                addSubTab.style.display = 'block';
+            }
+        }
+
+        function showLogSubTab(subTabId, element) {
+            const userLogsSubTab = document.getElementById('userLogsSubTab');
+            const adminLogsSubTab = document.getElementById('adminLogsSubTab');
+            const buttons = document.querySelectorAll('.log-sub-tab');
+
+            buttons.forEach(btn => {
+                btn.classList.remove('btn-white', 'active');
+                btn.classList.add('btn-outline-light');
+            });
+
+            element.classList.remove('btn-outline-light');
+            element.classList.add('btn-white', 'active');
+
+            if (subTabId === 'userLogs') {
+                userLogsSubTab.style.display = 'block';
+                adminLogsSubTab.style.display = 'none';
+            } else {
+                userLogsSubTab.style.display = 'none';
+                adminLogsSubTab.style.display = 'block';
+            }
+        }
+
+        function modifyDays(userId, action) {
+            const days = document.getElementById(`days_${userId}`).value;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/manage/${userId}/${action}_days`;
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'days';
+            input.value = days;
+            
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function deleteProduct(event, form) {
+            event.preventDefault();
+            if (confirm('Deseja excluir este produto?')) {
+                form.submit();
+            }
+            return false;
+        }
+
+        function filterUsers() {
+            const input = document.getElementById('userSearch').value.toLowerCase();
+            const product = document.getElementById('productFilter').value;
+            const rows = document.querySelectorAll('.user-row');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const rowProduct = row.getAttribute('data-product');
+                
+                const matchesSearch = text.includes(input);
+                const matchesProduct = product === 'ALL' || rowProduct === product;
+
+                if (matchesSearch && matchesProduct) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

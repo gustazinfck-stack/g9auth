@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0a0a0a;
+            --bg-card: #141414;
+            --accent: #ffffff;
+            --accent-hover: #e0e0e0;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #222222;
+            --input-bg: #111111;
+        }
+
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(255,255,255,0.02) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255,255,255,0.02) 0%, transparent 50%);
+            letter-spacing: -0.01em;
+        }
+
+        .login-card { 
+            background-color: var(--bg-card); 
+            border: 1px solid var(--border-color);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            width: 100%;
+            max-width: 420px;
+            padding: 3.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .login-card:hover {
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-5px);
+        }
+
+        .brand-icon {
+            font-size: 3.5rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+        }
+
+        h3 {
+            font-weight: 900 !important;
+            letter-spacing: -1.5px;
+            margin-bottom: 2rem !important;
+        }
+
+        .form-control {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 18px;
+            padding: 14px 20px;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+
+        .form-control:focus, .btn:focus {
+            background-color: var(--input-bg);
+            border-color: var(--accent);
+            color: white;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        .btn-g9 { 
+            background-color: var(--accent); 
+            color: #000;
+            border: none;
+            border-radius: 18px;
+            padding: 14px;
+            font-weight: 800;
+            transition: 0.3s all cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 1px;
+            margin-top: 1rem;
+        }
+
+        .btn-g9:hover { 
+            background-color: var(--accent-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255,255,255,0.2);
+            color: #000;
+        }
+
+        .alert {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 12px;
+        }
+
+        .form-label {
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            margin-left: 5px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card text-center">
+        <div class="brand-icon">
+        </div>
+        <h3 class="mb-1">Gusta9 Auth</h3>
+
+        <% if (error) { %>
+            <div class="alert small p-2 mb-3"><i class="fas fa-exclamation-circle me-1"></i> <%= error %></div>
+        <% } %>
+
+        <div class="mb-4">
+            <div class="text-center">
+                <div class="fw-bold text-white" style="font-size: 1.1rem; letter-spacing: 1px;">
+                </div>
+            </div>
+        </div>
+
+        <form action="/admin/login" method="POST" class="mt-4">
+            <div class="mb-3 text-start">
+                <label class="form-label small text-secondary">USUÁRIO</label>
+                <input type="text" name="username" class="form-control" placeholder="Digite seu usuário" required>
+            </div>
+            
+            <div class="mb-4 text-start">
+                <label class="form-label small text-secondary">SENHA</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-g9 w-100 mb-3 py-3 fw-bold">
+                <i class=""></i> Authenticate
+            </button>
+        </form>
+    
+    </div>
+</body>
+</html>
