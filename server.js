@@ -158,14 +158,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(session({
     secret: 'g9_secret_key_js_123',
-    resave: true,
-    saveUninitialized: false,
-    proxy: true,
-    cookie: {
-        secure: false, // Mantemos false para evitar problemas de compatibilidade inicial
-        maxAge: 24 * 60 * 60 * 1000
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+        secure: false,
+        maxAge: 24 * 60 * 60 * 1000 
     }
 }));
+
+// Test route to check if server is alive
+app.get('/ping', (req, res) => res.send('PONG - Servidor está vivo!'));
 
 // Global locals middleware
 app.use((req, res, next) => {
@@ -200,10 +202,14 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-    if (req.session.isAdmin) {
-        return res.redirect('/admin/dashboard');
+    try {
+        if (req.session && req.session.isAdmin) {
+            return res.redirect('/admin/dashboard');
+        }
+        res.render('login', { error: null });
+    } catch (e) {
+        res.status(500).send(`Erro ao carregar login: ${e.message}`);
     }
-    res.render('login');
 });
 
 app.post('/admin/login', (req, res) => {
